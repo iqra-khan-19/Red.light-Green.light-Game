@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Red Light, Green Light</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- =========================================================
+       AUDIO PLACEHOLDERS
+       Direct-linking to myinstants.com didn't work reliably (their
+       server blocks other sites from hotlinking, and I can't verify
+       exact file URLs from here) — so these are back to empty and
+       ready for files you host yourself. Two-minute fix:
+         1. Open each myinstants page and click its "Download MP3" button.
+         2. Rename the downloaded files to red-light.mp3, green-light.mp3,
+            lost.mp3, and theme.mp3 (or whatever names you like).
+         3. Put them in the same folder as index.html.
+         4. Set each src="" below to just that filename, e.g. src="red-light.mp3".
+       Leave a src empty and that sound is simply skipped — nothing breaks.
+       ========================================================= -->
+    <audio id="sound-red" src="doll-red-light.mp3" preload="auto"></audio>
+    <!-- plays on RED LIGHT -->
+    <audio
+      id="sound-green"
+      src="squid-game-green-light.mp3"
+      preload="auto"
+    ></audio>
+    <!-- plays on GREEN LIGHT -->
+    <audio id="sound-lost" src="fahhh_KcgAXfs.mp3" preload="auto"></audio>
+    <!-- plays when you get eliminated -->
+    <audio
+      id="sound-theme"
+      src="luis_humanoide-macabre-choir-inspired-by-squid-game-287425.mp3"
+      preload="auto"
+      loop
+    ></audio>
+    <!-- dramatic menu/lobby music, loops until the race starts -->
+
+    <div id="app">
+      <button
+        id="muteBtnGlobal"
+        class="mute-btn"
+        aria-label="Mute sound"
+        title="Mute / unmute sound"
+      >
+        🔊
+      </button>
+
+      <!-- ============ MODE SELECT ============ -->
+      <div id="modeScreen" class="panel">
+        <div class="drama-shapes" aria-hidden="true">
+          <div class="drama-shape drama-circle"></div>
+          <div class="drama-shape drama-square"></div>
+          <div class="drama-shape drama-triangle"></div>
+        </div>
+        <div class="mode-content">
+          <h1 class="drama-title">Red Light, Green Light</h1>
+          <div class="mode-buttons">
+            <button id="soloBtn">Play Solo (vs AI)</button>
+            <button id="hostBtn">Host a Game with Friends</button>
+            <button id="joinBtn" class="btn-secondary">
+              Join a Friend's Game
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ HOST LOBBY ============ -->
+      <div id="hostLobby" class="panel">
+        <h2>Your Room</h2>
+        <p>
+          Share this code — friends enter it under "Join a Friend's Game" from
+          their own device.
+        </p>
+        <div id="roomCodeDisplay">----</div>
+        <div class="lobby-actions">
+          <button id="shareCodeBtn" class="btn-secondary">Share Invite</button>
+        </div>
+        <p id="shareStatus" class="status-text"></p>
+        <div id="hostPlayerList" class="player-list"></div>
+        <div class="lobby-actions">
+          <button id="hostStartBtn" disabled>Start Game</button>
+          <button id="hostCancelBtn" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ============ JOIN SCREEN ============ -->
+      <div id="joinScreen" class="panel">
+        <h2>Join a Game</h2>
+        <input
+          id="joinCodeInput"
+          maxlength="4"
+          placeholder="CODE"
+          autocapitalize="characters"
+          autocomplete="off"
+        />
+        <div class="lobby-actions">
+          <button id="joinConnectBtn">Connect</button>
+          <button id="joinCancelBtn" class="btn-secondary">Back</button>
+        </div>
+        <p id="joinStatus" class="status-text"></p>
+      </div>
+
+      <!-- ============ GUEST LOBBY ============ -->
+      <div id="guestLobby" class="panel">
+        <h2>Waiting for host…</h2>
+        <div id="guestPlayerList" class="player-list"></div>
+        <p class="status-text">
+          The host will start the race any moment. Get your thumb ready.
+        </p>
+      </div>
+
+      <!-- ============ SOLO START SCREEN ============ -->
+      <div id="startScreen" class="panel">
+        <h2>Solo mode</h2>
+        <ul class="rules">
+          <li>
+            <strong>Green light:</strong> hold the move button (or Arrow Up / W
+            / Space) to advance.
+          </li>
+          <li>
+            <strong>Red light:</strong> let go immediately — moving while red
+            gets you eliminated.
+          </li>
+          <li>Other racers freeze and creep too. First to the line wins.</li>
+        </ul>
+        <button id="startBtn">Start Game</button>
+      </div>
+
+      <!-- ============ GAME SCREEN ============ -->
+      <div id="gameScreen">
+        <div class="panel" id="scoreboard">
+          <div id="scoreboardTitle">Scoreboard</div>
+          <div id="scoreList"></div>
+        </div>
+
+        <div class="panel" id="hud">
+          <div id="lightIndicator">
+            <div id="lightDot"></div>
+            <span id="lightLabel">GREEN LIGHT</span>
+          </div>
+          <div id="eliminatedCount">0 out</div>
+          <button
+            id="muteBtnGame"
+            class="mute-btn mute-btn-inline"
+            aria-label="Mute sound"
+            title="Mute / unmute sound"
+          >
+            🔊
+          </button>
+        </div>
+
+        <div id="trackWrap">
+          <canvas id="canvas" width="680" height="720"></canvas>
+          <div id="flash"></div>
+        </div>
+
+        <div id="controls">
+          <button id="moveBtn">HOLD TO MOVE</button>
+        </div>
+        <div id="hint">Arrow Up / W / Space also works</div>
+      </div>
+
+      <!-- ============ END SCREEN ============ -->
+      <div id="endScreen" class="panel">
+        <div class="win-celebration" id="winCelebration">
+          <div class="confetti-layer" id="confettiLayer"></div>
+          <!-- generic countdown-doll placeholder — swap this SVG for your own art if you like -->
+          <svg
+            id="winDoll"
+            width="110"
+            height="140"
+            viewBox="0 0 110 140"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <ellipse
+              cx="55"
+              cy="132"
+              rx="30"
+              ry="6"
+              fill="black"
+              opacity="0.15"
+            />
+            <path
+              d="M30 90 Q55 70 80 90 L86 138 L24 138 Z"
+              fill="var(--color-doll-dress)"
+              stroke="var(--color-doll-outline)"
+              stroke-width="2"
+            />
+            <circle
+              cx="55"
+              cy="55"
+              r="30"
+              fill="var(--color-doll-face)"
+              stroke="var(--color-doll-outline)"
+              stroke-width="2"
+            />
+            <circle cx="26" cy="50" r="10" fill="var(--color-doll-hair)" />
+            <circle cx="84" cy="50" r="10" fill="var(--color-doll-hair)" />
+            <path
+              d="M27 34 Q55 14 83 34 Q83 20 55 18 Q27 20 27 34 Z"
+              fill="var(--color-doll-hair)"
+            />
+            <circle cx="44" cy="55" r="4" fill="var(--color-doll-outline)" />
+            <circle cx="66" cy="55" r="4" fill="var(--color-doll-outline)" />
+            <path
+              d="M42 70 Q55 80 68 70"
+              stroke="var(--color-doll-outline)"
+              stroke-width="3"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+          <div class="speech-bubble" id="winSpeechBubble">Great job!</div>
+        </div>
+        <h2 id="resultTitle">Result</h2>
+        <p id="resultText"></p>
+        <div id="leaderboard"></div>
+        <button id="restartBtn">Play Again</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
